@@ -1,5 +1,6 @@
 const model = require('../model/model')
 const express = require('express')
+const calculate = require('../Calculations/calculations')
 
 const router = express.Router()
 
@@ -10,6 +11,22 @@ router.post("/register", (req, res, next) => {
         res.json(result)
 
     }, data)
+})
+
+router.get('/notify', (req, res, next) => {
+    id = req.query.id
+    if (id) {
+        model.fetchDriverInfo(id, ({success, data}) => {
+            if (success) {
+                res.json(calculate.completionRate(data))
+            }else{
+                res.json({'Error':"invalid driver id"})
+            }
+        })
+    }
+    else {
+        res.json({id: 'You have to provide a Driver ID'})
+    }
 })
 
 router.post("/place_order", (req, res, next) => {
