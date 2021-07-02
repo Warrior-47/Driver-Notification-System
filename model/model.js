@@ -16,26 +16,24 @@ class Model {
                             success: false
                         })
                     }
-                    
-                }
-            )
-        }catch(e) {
-            
-        }
+                })
+        }catch(e) { }
+    }
+    
+    static insertInfo(cb, driver) {
+        const { name, nid_number, phone, vehicle_id } = driver
+        db.execute("insert into drivers(name, nid_number,phone,vehicle_id) values(?,?,?,?)", [name, nid_number, phone, vehicle_id]).then(
+            (result) => {
+                cb({ 'success': true })
+            })
     }
 
-    static driverExists(id, cb) {
-        try {
-            db.execute("SELECT driver_id from drivers where driver_id=?", [id]).then(
-                res => {
-                    if (res[0].length !== 0) {
-                        cb({'success': true})
-                    }else {
-                        cb({'success': false})
-                    }
-                }
-            )
-        }catch (e) { }
+    static place_order(cb, order_completion) {
+        const { order_id, driver_id, status } = order_completion
+        db.execute("insert into order_completion(order_id, driver_id, status) values(?,?,?)", [order_id, driver_id, status]).then(
+            (result) => {
+                cb({ 'success': true })
+            })
     }
 }
 

@@ -4,11 +4,13 @@ const calculate = require('../Calculations/calculations')
 
 const router = express.Router()
 
-
-router.get('/', (req, res, next) => {
-    model.fetch((result) => {
+router.post("/register", (req, res, next) => {
+    const data = req.body
+    model.insertInfo(result => {
+        console.log(result)
         res.json(result)
-    })
+
+    }, data)
 })
 
 router.get('/notify', (req, res, next) => {
@@ -27,6 +29,13 @@ router.get('/notify', (req, res, next) => {
     }
 })
 
+router.post("/place_order", (req, res, next) => {
+    const data = req.body
+    model.place_order(result => {
+        console.log(result)
+        res.json(result)
 
+    }, data)
+})
 
 module.exports = router
