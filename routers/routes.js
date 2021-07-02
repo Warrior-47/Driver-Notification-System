@@ -10,8 +10,15 @@ router.post("/register", (req, res, next) => {
         res.json(result)
 
     }, data)
-}
+})
 
-)
+router.post("/place_order", (req, res, next) => {
+    const data = req.body
+    model.place_order(result => {
+        console.log(result)
+        res.json(result)
+
+    }, data)
+})
 
 module.exports = router

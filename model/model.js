@@ -8,6 +8,14 @@ class Model {
                 cb({ 'success': true })
             })
     }
+
+    static place_order(cb, order_completion) {
+        const { order_id, driver_id, status } = order_completion
+        db.execute("insert into order_completion(order_id, driver_id, status) values(?,?,?)", [order_id, driver_id, status]).then(
+            (result) => {
+                cb({ 'success': true })
+            })
+    }
 }
 
 module.exports = Model
