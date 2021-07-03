@@ -35,6 +35,19 @@ class Model {
                 cb({ 'success': true })
             })
     }
+
+    static fetch_driver_info (cb, driver_id) {
+        //console.log(driver_id)
+        db.execute("SELECT name, nid_number, phone, vehicle_id, count(*) AS rides FROM (SELECT name, nid_number, phone, vehicle_id, status FROM order_completion o RIGHT JOIN drivers d ON d.driver_id=o.driver_id WHERE d.driver_id=?) AS T GROUP BY name, nid_number, phone, vehicle_id, status ORDER BY status;", [driver_id])
+        .then(
+            (result) => {
+                
+                //console.log(result[0])
+                cb(result[0])
+                
+            }
+        )
+    }
 }
 
 module.exports = Model
