@@ -1,5 +1,5 @@
 const db = require('../util/db')
-
+const hash = require('../verification/hashing')
 class Model {
     static fetchDriverInfo(id, cb) {
         try {
@@ -34,6 +34,24 @@ class Model {
             (result) => {
                 cb({ 'success': true })
             })
+    }
+
+    static check_login({username, password}, cb) {
+        db.execute("SELECT username, password FROM admin_login WHERE username=?", [username]).then(
+            (result) => {
+                if (result[0].length === 0) {
+                    cb(false)
+                }else{
+                    hash.verify(password, result[0][0].password, auth => {
+                        if (auth) {
+                            cb(true)
+                        }else {
+                            cb(false)
+                        }
+                    })
+                }
+            }
+        )
     }
 }
 

@@ -38,4 +38,20 @@ router.post("/place_order", (req, res, next) => {
     }, data)
 })
 
+router.post("/admin", (req, res, next) => {
+    const login_info = req.body
+    model.check_login(login_info, authenticated => {
+        if (authenticated) {
+            res.json({
+                success: true,
+                token: 'dummy'
+            })
+        }else {
+            res.json({
+                success: false
+            })
+        }
+    })
+})
+
 module.exports = router
