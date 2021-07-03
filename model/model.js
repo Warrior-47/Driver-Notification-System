@@ -86,7 +86,7 @@ class Model {
          )
     }
 
-    static fetch_driver_info (cb, driver_id) {
+    static fetch_driver_info (driver_id, cb) {
         db.execute("SELECT name, nid_number, phone, vehicle_id, count(*) AS rides FROM (SELECT name, nid_number, phone, vehicle_id, status FROM order_completion o RIGHT JOIN drivers d ON d.driver_id=o.driver_id WHERE d.driver_id=?) AS T GROUP BY name, nid_number, phone, vehicle_id, status ORDER BY status;", [driver_id])
         .then(
             (result) => {

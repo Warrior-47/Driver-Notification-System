@@ -66,32 +66,41 @@ router.post("/admin", (req, res, next) => {
 router.get("/driver/:driver_id", isAuthenticated, (req,res,next) => {
     const driver_id = req.params.driver_id
 
-    model.fetch_driver_info(driver_info => {
-        var rides_cancelled = 0
-        var rides_completed = 0
+    model.fetch_driver_info(driver_id, ({success, driver_data, message}) => {
+        if (success){
+            var rides_cancelled = 0
+            var rides_completed = 0
 
-        if (driver_info.length === 0) {
-            res.json({'Error':"invalid driver id"})
+            if (driver_data.length === 0) {
+                res.json({'Error':"invalid driver id"})
+
+            }else {
+                const {name, nid_number, phone, vehicle_id} = driver_data[0]
+                if (driver_data.length === 2) {
+                    rides_cancelled = driver_data[0].rides
+                    rides_completed = driver_data[1].rides
+                }
+            
+                res.json({
+                    "driver_id" : driver_id,
+                    "name" : name,
+                    "nid_number" : nid_number,
+                    "phone" : phone,
+                    "vehicle_id" : vehicle_id,
+                    "rides_cancelled" : rides_cancelled,
+                    "rides_completed" : rides_completed,
+                    "total_rides" : rides_cancelled + rides_completed
+                })
+            }
 
         }else {
-            const {name, nid_number, phone, vehicle_id} = driver_info[0]
-            if (driver_info.length === 2) {
-                rides_cancelled = driver_info[0].rides
-                rides_completed = driver_info[1].rides
-            }
-        
             res.json({
-                "driver_id" : driver_id,
-                "name" : name,
-                "nid_number" : nid_number,
-                "phone" : phone,
-                "vehicle_id" : vehicle_id,
-                "rides_cancelled" : rides_cancelled,
-                "rides_completed" : rides_completed,
-                "total_rides" : rides_cancelled + rides_completed
+                success: false,
+                message: message
             })
         }
-    }, driver_id)
+        
+    })
 })
 
 module.exports = router
