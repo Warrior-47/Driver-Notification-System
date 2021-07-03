@@ -4,11 +4,19 @@ const calculate = require('../Calculations/calculations')
 
 const router = express.Router()
 
+const isAuthenticated = (req, res, next) => {
+    const token = req.query.token
+    if (token == "dummy") {
+        next()
+    }else {
+        res.json({"message": "Authorization failed"})
+    }
+}
+
 router.post("/register", (req, res, next) => {
     const data = req.body
     
     model.insertInfo(result => {
-        console.log(result)
         res.json(result)
     }, data)
 })
@@ -34,7 +42,6 @@ router.post("/place_order", (req, res, next) => {
     const data = req.body
 
     model.place_order(result => {
-        console.log(result)
         res.json(result)
 
     }, data)
@@ -56,7 +63,7 @@ router.post("/admin", (req, res, next) => {
     })
 })
 
-router.get("/driver/:driver_id",(req,res,next) => {
+router.get("/driver/:driver_id", isAuthenticated, (req,res,next) => {
     const driver_id = req.params.driver_id
 
     model.fetch_driver_info(driver_info => {
