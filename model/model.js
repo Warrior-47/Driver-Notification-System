@@ -1,32 +1,48 @@
-const e = require('express')
 const db = require('../util/db')
 const hash = require('../verification/hashing')
 
 class Model {
-    static fetchDriverInfo(id, cb) {
-        db.execute("SELECT count(*) AS rides FROM (SELECT status FROM order_completion o RIGHT JOIN drivers d ON d.driver_id=o.driver_id WHERE d.driver_id=? AND (date(timestamp)<CURDATE() OR status IS NULL) ORDER BY timestamp desc limit 100) AS T GROUP BY status ORDER BY status;",
-        [id]).then(
-            (res) => {
-                if(res[0].length !== 0){
-                    cb({
-                        success: true,
-                        data: res[0]
-                    })
+    static validate_driver_id(driver_id, cb) {
+        db.execute("SELECT driver_id FROM drivers WHERE driver_id=?", [driver_id]).then(
+            result => {
+                if(result[0].length !== 0) {
+                    cb({ success: true })
+
                 }else {
-                    cb({
-                        success: false
+                    cb({ 
+                        success: false,
+                        message: "invalid driver id"
                     })
                 }
-            }).catch(err => {
-                cb({
-                    success: false,
-                    message: err.message
-                })
             })
     }
+
+    static fetch_completion_info(driver_id, cb) {
+        Model.validate_driver_id(driver_id, ({success, message}) => {
+            if (success) {
+                db.execute("SELECT status, COUNT(status) AS rides FROM (SELECT status FROM order_completion WHERE driver_id=? AND DATE(timestamp) < CURDATE() ORDER BY timestamp DESC LIMIT 100) AS T GROUP BY status ORDER BY status;", [driver_id]).then(
+                    result => {
+                        cb({
+                            success: true,
+                            driver_data: result[0]
+                        })
+                    }).catch(err => {
+                        cb({
+                            success: false,
+                            message: err.message
+                        })
+                    })
+
+            }else {
+                cb({
+                    success: false,
+                    message: message
+                })
+            }
+        })
+    }
     
-    static insertInfo(cb, driver) {
-        const { name, nid_number, phone, vehicle_id } = driver
+    static insert_driver({ name, nid_number, phone, vehicle_id }, cb) {
         db.execute('SELECT nid_number, vehicle_id FROM drivers WHERE nid_number=? OR vehicle_id=?', [nid_number, vehicle_id]).then(
             (driver_info) => {
                 if (driver_info[0].length !== 0) {
@@ -49,11 +65,15 @@ class Model {
                             })
                         })
                 }
+            }).catch(err => {
+                cb({
+                    success: false,
+                    "message": err.message
+                })
             })
     }
 
-    static place_order(cb, order_completion) {
-        const { order_id, driver_id, status } = order_completion
+    static place_order({order_id, driver_id, status}, cb) {
         db.execute("insert into order_completion(order_id, driver_id, status) values(?,?,?)", [order_id, driver_id, status]).then(
             (result) => {
                 cb({
@@ -87,13 +107,21 @@ class Model {
     }
 
     static fetch_driver_info (driver_id, cb) {
-        db.execute("SELECT name, nid_number, phone, vehicle_id, count(*) AS rides FROM (SELECT name, nid_number, phone, vehicle_id, status FROM order_completion o RIGHT JOIN drivers d ON d.driver_id=o.driver_id WHERE d.driver_id=?) AS T GROUP BY name, nid_number, phone, vehicle_id, status ORDER BY status;", [driver_id])
+        db.execute("SELECT name, nid_number, phone, vehicle_id, status, COUNT(status) AS rides FROM (SELECT name, nid_number, phone, vehicle_id, status FROM order_completion o RIGHT JOIN drivers d ON d.driver_id=o.driver_id WHERE d.driver_id=?) AS T GROUP BY name, nid_number, phone, vehicle_id, status ORDER BY status;", [driver_id])
         .then(
-            (result) => {
-                cb({
-                    success: true,
-                    driver_data: result[0]
-                })
+            result => {
+                if (result[0].length !== 0) {
+                    cb({
+                        success: true,
+                        driver_data: result[0]
+                    })
+                
+                }else {
+                    cb({
+                        success: false,
+                        message: "invalid driver id"
+                    })
+                }
 
             }).catch(err => {
                 cb({

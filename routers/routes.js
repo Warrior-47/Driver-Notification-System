@@ -1,5 +1,5 @@
-const model = require('../model/model')
 const express = require('express')
+const model = require('../model/model')
 const calculate = require('../Calculations/calculations')
 
 const router = express.Router()
@@ -14,41 +14,45 @@ const isAuthenticated = (req, res, next) => {
 }
 
 router.post("/register", (req, res, next) => {
-    const data = req.body
+    const driver_info = req.body
     
-    model.insertInfo(result => {
+    model.insert_driver(driver_info, result => {
         res.json(result)
-    }, data)
+    })
+})
+
+router.post("/place_order", (req, res, next) => {
+    const order_info = req.body
+
+    model.place_order(order_info, result => {
+        res.json(result)
+
+    })
 })
 
 router.get('/notify', (req, res, next) => {
-    id = req.query.id
+    driver_id = req.query.driver_id
 
-    if (id) {
-        model.fetchDriverInfo(id, ({success, data}) => {
+    if (driver_id) {
+        model.fetch_completion_info(driver_id, ({success, driver_data, message}) => {
             if (success) {
-                res.json(calculate.completionRate(data))
+                calculate.completionRate(driver_data, (completion_message) => {
+                    res.json(completion_message)
+                })
+
             }else{
-                res.json({'Error':"invalid driver id"})
+                res.json({"Error": message})
             }
         })
     }
     else {
-        res.json({id: 'You have to provide a Driver ID'})
+        res.json({message: 'You have to provide a Driver ID'})
     }
-})
-
-router.post("/place_order", (req, res, next) => {
-    const data = req.body
-
-    model.place_order(result => {
-        res.json(result)
-
-    }, data)
 })
 
 router.post("/admin", (req, res, next) => {
     const login_info = req.body
+    
     model.check_login(login_info, authenticated => {
         if (authenticated) {
             res.json({
@@ -68,35 +72,26 @@ router.get("/driver/:driver_id", isAuthenticated, (req,res,next) => {
 
     model.fetch_driver_info(driver_id, ({success, driver_data, message}) => {
         if (success){
-            var rides_cancelled = 0
-            var rides_completed = 0
+            calculate.ride_information(driver_data, 
+                ({rides_cancelled, rides_completed, total_rides}) => {
+                    const {name, nid_number, phone, vehicle_id} = driver_data[0]
+                    
+                    res.json({
+                        "driver_id" : driver_id,
+                        "name" : name,
+                        "nid_number" : nid_number,
+                        "phone" : phone,
+                        "vehicle_id" : vehicle_id,
+                        "rides_cancelled" : rides_cancelled,
+                        "rides_completed" : rides_completed,
+                        "total_rides" : total_rides
 
-            if (driver_data.length === 0) {
-                res.json({'Error':"invalid driver id"})
-
-            }else {
-                const {name, nid_number, phone, vehicle_id} = driver_data[0]
-                if (driver_data.length === 2) {
-                    rides_cancelled = driver_data[0].rides
-                    rides_completed = driver_data[1].rides
-                }
-            
-                res.json({
-                    "driver_id" : driver_id,
-                    "name" : name,
-                    "nid_number" : nid_number,
-                    "phone" : phone,
-                    "vehicle_id" : vehicle_id,
-                    "rides_cancelled" : rides_cancelled,
-                    "rides_completed" : rides_completed,
-                    "total_rides" : rides_cancelled + rides_completed
-                })
-            }
+                    })
+            })
 
         }else {
             res.json({
-                success: false,
-                message: message
+                "Error": message
             })
         }
         
